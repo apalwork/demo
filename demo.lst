@@ -1,0 +1,1301 @@
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 1.
+
+
+
+                              1 ;--------------------------------------------------------
+                              2 ; File Created by SDCC : free open source ANSI-C Compiler
+                              3 ; Version 3.3.0 #8604 (Oct 17 2015) (MSVC)
+                              4 ; This file was generated Thu Nov 26 16:30:09 2015
+                              5 ;--------------------------------------------------------
+                              6 ; MST port for the MS322 series simple CPU
+                              7 ;--------------------------------------------------------
+                              8 ;	.file	"demo.c"
+                              9 	.module demo
+                             10 	;.list	p=MS311
+                             11 	;.radix dec
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 2.
+
+
+
+                             12 	.include "ms311sfr.def"
+                              1 	.area ms322sfr (SFR,OVR)
+                              2 .globl _IOR  	
+                              3 .globl _IODIR	
+                              4 .globl _IO	
+                              5 .globl _IOWK	
+                              6 .globl _IOWKDR 
+                              7 .globl _TIMERC 
+                              8 .globl _THRLD	
+                              9 .globl _RAMP0L 
+                             10 .globl _RAMP0LH
+                             11 .globl _RAMP0H 
+                             12 .globl _RAMP1L 
+                             13 .globl _RAMP1LH
+                             14 .globl _RAMP1H 
+                             15 .globl _PTRCL	
+                             16 .globl _PTRCH	
+                             17 .globl _ROMPL 	
+                             18 .globl _ROMPLH
+                             19 .globl _ROMPH 	
+                             20 .globl _BEEPC 	
+                             21 .globl _FILTERG 	
+                             22 .globl _ULAWC 	
+                             23 .globl _STACKL 
+                             24 .globl _STACKH 
+                             25 .globl _ADCON	
+                             26 .globl _DACON  
+                             27 .globl _SYSC 	
+                             28 .globl _SPIM	
+                             29 .globl _SPIMH
+                             30 .globl _SPIH	
+                             31 .globl _SPIOP	
+                             32 .globl _SPI_BANK
+                             33 .globl _ADP_IND
+                             34 .globl _ADP_VPL
+                             35 .globl _ADP_VPH
+                             36 .globl _ADP_VPLH
+                             37 .globl _ADL	
+                             38 .globl _ADH	
+                             39 .globl _ZC	
+                             40 .globl _ADCG	
+                             41 .globl _DAC_PL	
+                             42 .globl _DAC_PH 
+                             43 .globl _PAG	
+                             44 .globl _DMAL	
+                             45 .globl _DMAH	
+                             46 .globl _DMAHL
+                             47 .globl _SPIL	
+                             48 .globl _IOMASK 
+                             49 .globl _IOCMP  
+                             50 .globl _IOCNT  
+                             51 .globl _LVDCON 
+                             52 .globl _LVRCON 
+                             53 .globl _OFFSETL
+                             54 .globl _OFFSETLH
+                             55 .globl _OFFSETH
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 3.
+
+
+
+                             56 .globl _RCCON  
+                             57 .globl _BGCON  
+                             58 .globl _PWRL	
+                             59 .globl _PWRHL	
+                             60 .globl _CRYPT  
+                             61 .globl _PWRH	
+                             62 .globl _IROMDL 
+                             63 .globl _IROMDH 
+                             64 .globl _IROMDLH 
+                             65 .globl _RECMUTE
+                             66 .globl _SPKC
+                             67 .globl _DCLAMP
+                             68 .globl _SSPIC
+                             69 .globl _SSPIL
+                             70 .globl _SSPIM
+                             71 .globl _SSPIH
+                             72 ; fake registers below
+                             73 .globl _RAMP0UW
+                             74 .globl _RAMP1UW
+                             75 .globl _ROMPUW
+                             76 .globl _RAMP0	
+                             77 .globl _RAMP0INC
+                             78 .globl _RAMP1  
+                             79 .globl _RAMP1INC
+                             80 .globl _RAMP1INC2
+                             81 .globl _ROMP	
+                             82 .globl _ROMPINC
+                             83 .globl _ROMPINC2
+                             84 .globl _ACC	
+                             85 .globl _ICE0
+                             86 .globl _ICE1
+                             87 .globl _ICE2
+                             88 .globl _ICE3
+                             89 .globl _ICE4
+                             90 
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 4.
+
+
+
+                             13 ;--------------------------------------------------------
+                             14 ; overlayable items in internal ram 
+                             15 ;--------------------------------------------------------
+                             16 ;	udata_ovr
+                             17 	;***Area-order define***
+                             18 	.area sharebank (DATA,OVR)
+                             19 	.area DSEG (DATA)
+                             20 	.area ISEG (DATA)
+                             21 	.area XSEG (DATA)
+                             22 	.area XISEG (DATA)
+                             23 	.area SSEG (DATA,OVR)
+                             24 ;--------------------------------------------------------
+                             25 ; reset vector 
+                             26 ;--------------------------------------------------------
+                             27 .area STARTUP_CSEG	 (CODE)	
+                             28 	.globl __ms311_cstartup
+   0000 F0 00         [ 2]   29 	jmp __ms311_cstartup
+                             30 ;--------------------------------------------------------
+                             31 ; code
+                             32 ;--------------------------------------------------------
+                             33 ;***
+                             34 ;  pBlock Stats: dbName = M
+                             35 ;***
+                             36 ;entry:  _main:	;Function start
+                             37 ; 0 exit points
+                             38 ;highest stack level is: 0
+                             39 ;functions called:
+                             40 ;   _init
+                             41 ;   _timer_routine
+                             42 ;   _enter_idle_mode
+                             43 ;   _enter_rec_mode
+                             44 ;   _enter_play_mode
+                             45 ;   _sys_rec
+                             46 ;   _sys_play
+                             47 ;   _api_normal_sleep
+                             48 ;   _api_enter_stdby_mode
+                             49 ;   _key_machine
+                             50 ;; Starting pCode block
+   0002                      51 _main:	;Function start
+                             52 ; 0 exit points
+                             53 ;	.line	290; "demo.c"	ULAWC=ULAWC_DEFAULT;
+   0002 00 18         [ 2]   54 	LDA	#0x18
+   0004 12 00         [ 2]   55 	STA	_ULAWC
+                             56 ;	.line	291; "demo.c"	init();
+   0006 B3 2B         [ 3]   57 	CALL	_init
+                             58 ;	.line	292; "demo.c"	if(!(init_io_state&IO_CAP) )
+   0008 00 08         [ 2]   59 	LDA	#0x08
+   000A 73 00         [ 2]   60 	AND	_init_io_state
+   000C E4 21         [ 2]   61 	JNZ	_00290_DS_
+                             62 ;	.line	295; "demo.c"	API_SPI_ERASE((USHORT)R2_STARTPAGE); // first time we erase!!
+   000E 00 01         [ 2]   63 	LDA	#0x01
+   0010 12 00         [ 2]   64 	STA	_SPIH
+   0012 00 70         [ 2]   65 	LDA	#0x70
+   0014 12 00         [ 2]   66 	STA	_SPIM
+   0016 CE            [ 1]   67 	CLRA	
+   0017 12 00         [ 2]   68 	STA	_SPIL
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 5.
+
+
+
+   0019 00 01         [ 2]   69 	LDA	#0x01
+   001B 12 00         [ 2]   70 	STA	_SPIOP
+   001D 00 02         [ 2]   71 	LDA	#0x02
+   001F 12 00         [ 2]   72 	STA	_SPIOP
+   0021                      73 _00290_DS_:
+                             74 ;	.line	299; "demo.c"	timer_routine();
+   0021 B2 B9         [ 3]   75 	CALL	_timer_routine
+                             76 ;	.line	300; "demo.c"	if(key_code)
+   0023 03 03         [ 2]   77 	LDA	_key_code
+   0025 E6 9F         [ 2]   78 	JZ	_00271_DS_
+                             79 ;	.line	302; "demo.c"	if(sys_state!=SYS_IDLE)
+   0027 03 01         [ 2]   80 	LDA	_sys_state
+   0029 E6 2F         [ 2]   81 	JZ	_00268_DS_
+                             82 ;	.line	303; "demo.c"	enter_idle_mode();
+   002B B1 51         [ 3]   83 	CALL	_enter_idle_mode
+   002D F0 9C         [ 2]   84 	JMP	_00269_DS_
+   002F                      85 _00268_DS_:
+                             86 ;	.line	305; "demo.c"	switch(key_code)
+   002F 03 03         [ 2]   87 	LDA	_key_code
+   0031 E6 9C         [ 2]   88 	JZ	_00269_DS_
+   0033 2F            [ 2]   89 	SETB	_C
+   0034 00 03         [ 2]   90 	LDA	#0x03
+   0036 4B 03         [ 2]   91 	SUBB	_key_code
+   0038 E0 9C         [ 2]   92 	JNC	_00269_DS_
+   003A 03 03         [ 2]   93 	LDA	_key_code
+   003C CD            [ 1]   94 	DECA	
+   003D B0 3F         [ 3]   95 	CALL	_00336_DS_
+   003F                      96 _00336_DS_:
+   003F 90            [ 1]   97 	SHL	
+   0040 50 4A         [ 2]   98 	ADD	#_00337_DS_
+   0042 12 00         [ 2]   99 	STA	_STACKL
+   0044 CE            [ 1]  100 	CLRA	
+   0045 40 00         [ 2]  101 	ADDC	#>(_00337_DS_)
+   0047 12 00         [ 2]  102 	STA	_STACKH
+   0049 C0            [ 1]  103 	RET	
+   004A                     104 _00337_DS_:
+   004A F0 54         [ 2]  105 	JMP	_00261_DS_
+   004C F0 50         [ 2]  106 	JMP	_00260_DS_
+   004E F0 97         [ 2]  107 	JMP	_00265_DS_
+   0050                     108 _00260_DS_:
+                            109 ;	.line	308; "demo.c"	enter_rec_mode();
+   0050 B1 83         [ 3]  110 	CALL	_enter_rec_mode
+                            111 ;	.line	309; "demo.c"	break;
+   0052 F0 9C         [ 2]  112 	JMP	_00269_DS_
+   0054                     113 _00261_DS_:
+                            114 ;	.line	312; "demo.c"	API_SPI_READ_PAGE((USHORT)R2_STARTPAGE, 1);// read prev data to 0x100
+   0054 00 01         [ 2]  115 	LDA	#0x01
+   0056 12 00         [ 2]  116 	STA	_SPIH
+   0058 00 70         [ 2]  117 	LDA	#0x70
+   005A 12 00         [ 2]  118 	STA	_SPIM
+   005C CE            [ 1]  119 	CLRA	
+   005D 12 00         [ 2]  120 	STA	_SPIL
+   005F 00 48         [ 2]  121 	LDA	#0x48
+   0061 12 00         [ 2]  122 	STA	_SPIOP
+                            123 ;	.line	313; "demo.c"	if(TAG==0xff)
+   0063 CE            [ 1]  124 	CLRA	
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 6.
+
+
+
+   0064 12 00         [ 2]  125 	STA	_ROMPL
+   0066 00 81         [ 2]  126 	LDA	#0x81
+   0068 12 00         [ 2]  127 	STA	_ROMPH
+   006A 0E            [ 2]  128 	LDA	@_ROMPINC
+   006B 80 FF         [ 2]  129 	XOR	#0xff
+   006D E4 90         [ 2]  130 	JNZ	_00263_DS_
+                            131 ;	.line	315; "demo.c"	TAG=0;
+   006F 00 81         [ 2]  132 	LDA	#0x81
+   0071 12 00         [ 2]  133 	STA	_ROMPH
+   0073 CE            [ 1]  134 	CLRA	
+   0074 12 00         [ 2]  135 	STA	_ROMPL
+   0076 1E            [ 2]  136 	STA	@_ROMPINC
+                            137 ;	.line	316; "demo.c"	API_SPI_WRITE_PAGE((USHORT)R2_STARTPAGE,1); // write it
+   0077 00 01         [ 2]  138 	LDA	#0x01
+   0079 12 00         [ 2]  139 	STA	_SPIH
+   007B 00 70         [ 2]  140 	LDA	#0x70
+   007D 12 00         [ 2]  141 	STA	_SPIM
+   007F CE            [ 1]  142 	CLRA	
+   0080 12 00         [ 2]  143 	STA	_SPIL
+   0082 00 01         [ 2]  144 	LDA	#0x01
+   0084 12 00         [ 2]  145 	STA	_SPIOP
+   0086 00 44         [ 2]  146 	LDA	#0x44
+   0088 12 00         [ 2]  147 	STA	_SPIOP
+                            148 ;	.line	317; "demo.c"	enter_play_mode(0);
+   008A CE            [ 1]  149 	CLRA	
+   008B 1C            [ 2]  150 	PUSH	
+   008C B2 12         [ 3]  151 	CALL	_enter_play_mode
+   008E F0 9C         [ 2]  152 	JMP	_00269_DS_
+   0090                     153 _00263_DS_:
+                            154 ;	.line	320; "demo.c"	enter_play_mode(1);
+   0090 00 01         [ 2]  155 	LDA	#0x01
+   0092 1C            [ 2]  156 	PUSH	
+   0093 B2 12         [ 3]  157 	CALL	_enter_play_mode
+                            158 ;	.line	323; "demo.c"	break;
+   0095 F0 9C         [ 2]  159 	JMP	_00269_DS_
+   0097                     160 _00265_DS_:
+                            161 ;	.line	325; "demo.c"	enter_play_mode(2);
+   0097 00 02         [ 2]  162 	LDA	#0x02
+   0099 1C            [ 2]  163 	PUSH	
+   009A B2 12         [ 3]  164 	CALL	_enter_play_mode
+   009C                     165 _00269_DS_:
+                            166 ;	.line	331; "demo.c"	key_code=0;
+   009C CE            [ 1]  167 	CLRA	
+   009D 13 03         [ 2]  168 	STA	_key_code
+   009F                     169 _00271_DS_:
+                            170 ;	.line	334; "demo.c"	if(sys_state==SYS_REC)
+   009F 03 01         [ 2]  171 	LDA	_sys_state
+   00A1 80 02         [ 2]  172 	XOR	#0x02
+   00A3 E4 A9         [ 2]  173 	JNZ	_00287_DS_
+                            174 ;	.line	335; "demo.c"	sys_rec();
+   00A5 B0 F5         [ 3]  175 	CALL	_sys_rec
+   00A7 F0 21         [ 2]  176 	JMP	_00290_DS_
+   00A9                     177 _00287_DS_:
+                            178 ;	.line	336; "demo.c"	else if(sys_state==SYS_PLAY)
+   00A9 03 01         [ 2]  179 	LDA	_sys_state
+   00AB 80 01         [ 2]  180 	XOR	#0x01
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 7.
+
+
+
+   00AD E4 B3         [ 2]  181 	JNZ	_00284_DS_
+                            182 ;	.line	337; "demo.c"	sys_play();
+   00AF B1 0F         [ 3]  183 	CALL	_sys_play
+   00B1 F0 21         [ 2]  184 	JMP	_00290_DS_
+   00B3                     185 _00284_DS_:
+                            186 ;	.line	338; "demo.c"	else if(!sleep_timer && !key_state)
+   00B3 03 06         [ 2]  187 	LDA	_sleep_timer
+   00B5 E4 DA         [ 2]  188 	JNZ	_00280_DS_
+   00B7 03 00         [ 2]  189 	LDA	_key_state
+   00B9 E4 DA         [ 2]  190 	JNZ	_00280_DS_
+                            191 ;	.line	341; "demo.c"	IODIR=0;
+   00BB CE            [ 1]  192 	CLRA	
+                            193 ;	.line	342; "demo.c"	IO=0;
+   00BC 12 00         [ 2]  194 	STA	_IODIR
+   00BE 12 00         [ 2]  195 	STA	_IO
+                            196 ;	.line	343; "demo.c"	IOR=0xff;
+   00C0 00 FF         [ 2]  197 	LDA	#0xff
+   00C2 12 00         [ 2]  198 	STA	_IOR
+                            199 ;	.line	345; "demo.c"	IO|=0x80;
+   00C4 02 00         [ 2]  200 	LDA	_IO
+   00C6 60 80         [ 2]  201 	ORA	#0x80
+                            202 ;	.line	346; "demo.c"	if(IO==0xff)
+   00C8 12 00         [ 2]  203 	STA	_IO
+   00CA 80 FF         [ 2]  204 	XOR	#0xff
+   00CC E4 21         [ 2]  205 	JNZ	_00290_DS_
+                            206 ;	.line	349; "demo.c"	api_normal_sleep(IO_KEY_ALL,0,1);
+   00CE 00 01         [ 2]  207 	LDA	#0x01
+   00D0 1C            [ 2]  208 	PUSH	
+   00D1 CE            [ 1]  209 	CLRA	
+   00D2 1C            [ 2]  210 	PUSH	
+   00D3 00 07         [ 2]  211 	LDA	#0x07
+   00D5 1C            [ 2]  212 	PUSH	
+   00D6 B0 00         [ 3]  213 	CALL	_api_normal_sleep
+   00D8 F0 21         [ 2]  214 	JMP	_00290_DS_
+   00DA                     215 _00280_DS_:
+                            216 ;	.line	372; "demo.c"	if(key_state)
+   00DA 03 00         [ 2]  217 	LDA	_key_state
+   00DC E6 E6         [ 2]  218 	JZ	_00275_DS_
+                            219 ;	.line	373; "demo.c"	api_enter_stdby_mode(0 ,0,0); // use tmr wk
+   00DE CE            [ 1]  220 	CLRA	
+   00DF 1C            [ 2]  221 	PUSH	
+   00E0 1C            [ 2]  222 	PUSH	
+   00E1 1C            [ 2]  223 	PUSH	
+   00E2 B0 00         [ 3]  224 	CALL	_api_enter_stdby_mode
+   00E4 F0 EE         [ 2]  225 	JMP	_00276_DS_
+   00E6                     226 _00275_DS_:
+                            227 ;	.line	375; "demo.c"	api_enter_stdby_mode(IO_KEY_ALL,0,0); //use tmr+io wk
+   00E6 CE            [ 1]  228 	CLRA	
+   00E7 1C            [ 2]  229 	PUSH	
+   00E8 1C            [ 2]  230 	PUSH	
+   00E9 00 07         [ 2]  231 	LDA	#0x07
+   00EB 1C            [ 2]  232 	PUSH	
+   00EC B0 00         [ 3]  233 	CALL	_api_enter_stdby_mode
+   00EE                     234 _00276_DS_:
+                            235 ;	.line	376; "demo.c"	if(!TOV)
+   00EE DC            [ 1]  236 	LDC	_TOV
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 8.
+
+
+
+   00EF E2 21         [ 2]  237 	JC	_00290_DS_
+                            238 ;	.line	377; "demo.c"	key_machine(); // wake up by IO, we get keycode first
+   00F1 B2 CE         [ 3]  239 	CALL	_key_machine
+   00F3 F0 21         [ 2]  240 	JMP	_00290_DS_
+                            241 
+                            242 ;***
+                            243 ;  pBlock Stats: dbName = C
+                            244 ;***
+                            245 ;entry:  _sys_rec:	;Function start
+                            246 ; 0 exit points
+                            247 ;highest stack level is: 1
+                            248 ;functions called:
+                            249 ;   _enter_idle_mode
+                            250 ;   _api_rec_job_alc
+                            251 ;   _api_enter_stdby_mode
+                            252 ;; Starting pCode block
+   00F5                     253 _sys_rec:	;Function start
+                            254 ; 0 exit points
+                            255 ;	.line	267; "demo.c"	if(IO&IO_REC)
+   00F5 02 00         [ 2]  256 	LDA	_IO
+   00F7 92            [ 1]  257 	SHR	
+   00F8 E0 FC         [ 2]  258 	JNC	_00245_DS_
+                            259 ;	.line	269; "demo.c"	enter_idle_mode();
+   00FA F1 51         [ 2]  260 	JMP	_enter_idle_mode
+   00FC                     261 _00245_DS_:
+                            262 ;	.line	272; "demo.c"	if(!api_rec_job_alc())
+   00FC B0 00         [ 3]  263 	CALL	_api_rec_job_alc
+                            264 ;	.line	270; "demo.c"	return;
+   00FE E5 02         [ 2]  265 	JNZ	_00250_DS_
+                            266 ;	.line	273; "demo.c"	enter_idle_mode();
+   0100 F1 51         [ 2]  267 	JMP	_enter_idle_mode
+   0102                     268 _00250_DS_:
+                            269 ;	.line	276; "demo.c"	if(IO&IO_REC)
+   0102 02 00         [ 2]  270 	LDA	_IO
+   0104 92            [ 1]  271 	SHR	
+   0105 E1 09         [ 2]  272 	JNC	_00247_DS_
+                            273 ;	.line	277; "demo.c"	enter_idle_mode();
+   0107 F1 51         [ 2]  274 	JMP	_enter_idle_mode
+   0109                     275 _00247_DS_:
+                            276 ;	.line	279; "demo.c"	api_enter_stdby_mode(0,0,0);// use timer wk, adjust 
+   0109 CE            [ 1]  277 	CLRA	
+   010A 1C            [ 2]  278 	PUSH	
+   010B 1C            [ 2]  279 	PUSH	
+   010C 1C            [ 2]  280 	PUSH	
+   010D F0 00         [ 2]  281 	JMP	_api_enter_stdby_mode
+                            282 
+                            283 ;***
+                            284 ;  pBlock Stats: dbName = C
+                            285 ;***
+                            286 ;entry:  _sys_play:	;Function start
+                            287 ; 0 exit points
+                            288 ;highest stack level is: 1
+                            289 ;functions called:
+                            290 ;   _api_play_job
+                            291 ;   _enter_idle_mode
+                            292 ;   _api_enter_stdby_mode
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 9.
+
+
+
+                            293 ;; Starting pCode block
+   010F                     294 _sys_play:	;Function start
+                            295 ; 0 exit points
+                            296 ;	.line	233; "demo.c"	void sys_play(void)
+   010F 02 00         [ 2]  297 	LDA	_RAMP1L
+   0111 1C            [ 2]  298 	PUSH	
+   0112 C8            [ 1]  299 	P02P1	
+   0113 1C            [ 2]  300 	PUSH	
+                            301 ;	.line	235; "demo.c"	BYTE result =api_play_job(); 
+   0114 B0 00         [ 3]  302 	CALL	_api_play_job
+                            303 ;	.line	236; "demo.c"	if(!result)
+   0116 15            [ 2]  304 	STA	@_RAMP1
+   0117 E5 1D         [ 2]  305 	JNZ	_00237_DS_
+                            306 ;	.line	237; "demo.c"	enter_idle_mode();
+   0119 B1 51         [ 3]  307 	CALL	_enter_idle_mode
+   011B F1 4C         [ 2]  308 	JMP	_00239_DS_
+   011D                     309 _00237_DS_:
+                            310 ;	.line	238; "demo.c"	else if(result==2)
+   011D 05            [ 2]  311 	LDA	@_RAMP1
+   011E 80 02         [ 2]  312 	XOR	#0x02
+   0120 E5 36         [ 2]  313 	JNZ	_00234_DS_
+                            314 ;	.line	247; "demo.c"	if(PWRH)
+   0122 02 00         [ 2]  315 	LDA	_PWRH
+   0124 E7 2E         [ 2]  316 	JZ	_00228_DS_
+                            317 ;	.line	248; "demo.c"	IO&=0x7F;
+   0126 02 00         [ 2]  318 	LDA	_IO
+   0128 70 7F         [ 2]  319 	AND	#0x7f
+   012A 12 00         [ 2]  320 	STA	_IO
+   012C F1 4C         [ 2]  321 	JMP	_00239_DS_
+   012E                     322 _00228_DS_:
+                            323 ;	.line	250; "demo.c"	IO|=0x80;
+   012E 02 00         [ 2]  324 	LDA	_IO
+   0130 60 80         [ 2]  325 	ORA	#0x80
+   0132 12 00         [ 2]  326 	STA	_IO
+   0134 F1 4C         [ 2]  327 	JMP	_00239_DS_
+   0136                     328 _00234_DS_:
+                            329 ;	.line	253; "demo.c"	if(key_state==KEYS_NOKEY)
+   0136 03 00         [ 2]  330 	LDA	_key_state
+   0138 E5 46         [ 2]  331 	JNZ	_00231_DS_
+                            332 ;	.line	256; "demo.c"	api_enter_stdby_mode(IO_KEY_ALL, 0, 1);
+   013A 00 01         [ 2]  333 	LDA	#0x01
+   013C 1C            [ 2]  334 	PUSH	
+   013D CE            [ 1]  335 	CLRA	
+   013E 1C            [ 2]  336 	PUSH	
+   013F 00 07         [ 2]  337 	LDA	#0x07
+   0141 1C            [ 2]  338 	PUSH	
+   0142 B0 00         [ 3]  339 	CALL	_api_enter_stdby_mode
+   0144 F1 4C         [ 2]  340 	JMP	_00239_DS_
+   0146                     341 _00231_DS_:
+                            342 ;	.line	259; "demo.c"	api_enter_stdby_mode(0,0,0);
+   0146 CE            [ 1]  343 	CLRA	
+   0147 1C            [ 2]  344 	PUSH	
+   0148 1C            [ 2]  345 	PUSH	
+   0149 1C            [ 2]  346 	PUSH	
+   014A B0 00         [ 3]  347 	CALL	_api_enter_stdby_mode
+   014C                     348 _00239_DS_:
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 10.
+
+
+
+   014C C4            [ 1]  349 	POP	
+   014D C4            [ 1]  350 	POP	
+   014E 12 00         [ 2]  351 	STA	_RAMP1L
+   0150 C0            [ 1]  352 	RET	
+                            353 
+                            354 ;***
+                            355 ;  pBlock Stats: dbName = C
+                            356 ;***
+                            357 ;entry:  _enter_idle_mode:	;Function start
+                            358 ; 0 exit points
+                            359 ;highest stack level is: 2
+                            360 ;functions called:
+                            361 ;   _api_play_stop
+                            362 ;   _api_rec_stop_alc
+                            363 ;   _api_beep_start
+                            364 ;   _wait_beep
+                            365 ;   _api_beep_stop
+                            366 ;; Starting pCode block
+   0151                     367 _enter_idle_mode:	;Function start
+                            368 ; 0 exit points
+                            369 ;	.line	215; "demo.c"	api_play_stop();
+   0151 B0 00         [ 3]  370 	CALL	_api_play_stop
+                            371 ;	.line	217; "demo.c"	if(sys_state==SYS_REC) // stop from recording
+   0153 03 01         [ 2]  372 	LDA	_sys_state
+   0155 80 02         [ 2]  373 	XOR	#0x02
+   0157 E5 7B         [ 2]  374 	JNZ	_00222_DS_
+                            375 ;	.line	219; "demo.c"	api_rec_stop_alc(1); // it will add endcode here
+   0159 00 01         [ 2]  376 	LDA	#0x01
+   015B 1C            [ 2]  377 	PUSH	
+   015C B0 00         [ 3]  378 	CALL	_api_rec_stop_alc
+                            379 ;	.line	221; "demo.c"	api_beep_start(NORMAL_BEEP);
+   015E 00 14         [ 2]  380 	LDA	#0x14
+   0160 1C            [ 2]  381 	PUSH	
+   0161 B0 00         [ 3]  382 	CALL	_api_beep_start
+                            383 ;	.line	222; "demo.c"	wait_beep(BEEP_TIME2);
+   0163 00 50         [ 2]  384 	LDA	#0x50
+   0165 1C            [ 2]  385 	PUSH	
+   0166 B1 E9         [ 3]  386 	CALL	_wait_beep
+                            387 ;	.line	223; "demo.c"	api_beep_stop();
+   0168 B0 00         [ 3]  388 	CALL	_api_beep_stop
+                            389 ;	.line	224; "demo.c"	wait_beep(BEEP_TIME2);
+   016A 00 50         [ 2]  390 	LDA	#0x50
+   016C 1C            [ 2]  391 	PUSH	
+   016D B1 E9         [ 3]  392 	CALL	_wait_beep
+                            393 ;	.line	225; "demo.c"	api_beep_start(NORMAL_BEEP);
+   016F 00 14         [ 2]  394 	LDA	#0x14
+   0171 1C            [ 2]  395 	PUSH	
+   0172 B0 00         [ 3]  396 	CALL	_api_beep_start
+                            397 ;	.line	226; "demo.c"	wait_beep(BEEP_TIME2);
+   0174 00 50         [ 2]  398 	LDA	#0x50
+   0176 1C            [ 2]  399 	PUSH	
+   0177 B1 E9         [ 3]  400 	CALL	_wait_beep
+                            401 ;	.line	227; "demo.c"	api_beep_stop();
+   0179 B0 00         [ 3]  402 	CALL	_api_beep_stop
+   017B                     403 _00222_DS_:
+                            404 ;	.line	229; "demo.c"	sys_state=SYS_IDLE;
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 11.
+
+
+
+   017B CE            [ 1]  405 	CLRA	
+   017C 13 01         [ 2]  406 	STA	_sys_state
+                            407 ;	.line	230; "demo.c"	sleep_timer=KEY_WAIT;
+   017E 00 05         [ 2]  408 	LDA	#0x05
+   0180 13 06         [ 2]  409 	STA	_sleep_timer
+   0182 C0            [ 1]  410 	RET	
+                            411 
+                            412 ;***
+                            413 ;  pBlock Stats: dbName = C
+                            414 ;***
+                            415 ;entry:  _enter_rec_mode:	;Function start
+                            416 ; 0 exit points
+                            417 ;highest stack level is: 1
+                            418 ;functions called:
+                            419 ;   _api_beep_start
+                            420 ;   _wait_beep
+                            421 ;   _api_beep_stop
+                            422 ;   _api_rec_prepare_alc
+                            423 ;   _api_rec_stop_alc
+                            424 ;   _api_rec_start_alc
+                            425 ;; Starting pCode block
+   0183                     426 _enter_rec_mode:	;Function start
+                            427 ; 0 exit points
+                            428 ;	.line	181; "demo.c"	api_beep_start(NORMAL_BEEP);
+   0183 00 14         [ 2]  429 	LDA	#0x14
+   0185 1C            [ 2]  430 	PUSH	
+   0186 B0 00         [ 3]  431 	CALL	_api_beep_start
+                            432 ;	.line	182; "demo.c"	wait_beep(BEEP_TIME1);
+   0188 00 64         [ 2]  433 	LDA	#0x64
+   018A 1C            [ 2]  434 	PUSH	
+   018B B1 E9         [ 3]  435 	CALL	_wait_beep
+                            436 ;	.line	183; "demo.c"	api_beep_stop();
+   018D B0 00         [ 3]  437 	CALL	_api_beep_stop
+                            438 ;	.line	185; "demo.c"	if(IO&IO_REC)
+   018F 02 00         [ 2]  439 	LDA	_IO
+   0191 92            [ 1]  440 	SHR	
+                            441 ;	.line	186; "demo.c"	return;
+   0192 E3 D6         [ 2]  442 	JC	_00216_DS_
+                            443 ;	.line	192; "demo.c"	API_EN5K_ON // 5k ON means small gain
+   0194 00 10         [ 2]  444 	LDA	#0x10
+   0196 1C            [ 2]  445 	PUSH	
+   0197 1C            [ 2]  446 	PUSH	
+   0198 00 F8         [ 2]  447 	LDA	#0xf8
+   019A 1C            [ 2]  448 	PUSH	
+   019B 00 F0         [ 2]  449 	LDA	#0xf0
+   019D 1C            [ 2]  450 	PUSH	
+   019E 00 80         [ 2]  451 	LDA	#0x80
+   01A0 1C            [ 2]  452 	PUSH	
+   01A1 B0 00         [ 3]  453 	CALL	_api_rec_prepare_alc
+                            454 ;	.line	194; "demo.c"	wait_beep(REC_WAIT_TIME); // wait settle down
+   01A3 00 64         [ 2]  455 	LDA	#0x64
+   01A5 1C            [ 2]  456 	PUSH	
+   01A6 B1 E9         [ 3]  457 	CALL	_wait_beep
+                            458 ;	.line	195; "demo.c"	if(IO&IO_REC)
+   01A8 02 00         [ 2]  459 	LDA	_IO
+   01AA 92            [ 1]  460 	SHR	
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 12.
+
+
+
+   01AB E1 B1         [ 2]  461 	JNC	_00213_DS_
+                            462 ;	.line	197; "demo.c"	api_rec_stop_alc(0); // if key released , we stop
+   01AD CE            [ 1]  463 	CLRA	
+   01AE 1C            [ 2]  464 	PUSH	
+                            465 ;	.line	198; "demo.c"	return;	
+   01AF F0 00         [ 2]  466 	JMP	_api_rec_stop_alc
+   01B1                     467 _00213_DS_:
+                            468 ;	.line	204; "demo.c"	,callbackchk)) // callback means a function to check if finish
+   01B1 00 D7         [ 2]  469 	LDA	#(_callbackchk+0)
+   01B3 1C            [ 2]  470 	PUSH	
+   01B4 00 01         [ 2]  471 	LDA	#>(_callbackchk+0)
+   01B6 1C            [ 2]  472 	PUSH	
+   01B7 CE            [ 1]  473 	CLRA	
+   01B8 1C            [ 2]  474 	PUSH	
+   01B9 00 08         [ 2]  475 	LDA	#0x08
+   01BB 1C            [ 2]  476 	PUSH	
+   01BC 00 80         [ 2]  477 	LDA	#0x80
+   01BE 1C            [ 2]  478 	PUSH	
+   01BF 00 01         [ 2]  479 	LDA	#0x01
+   01C1 1C            [ 2]  480 	PUSH	
+   01C2 CE            [ 1]  481 	CLRA	
+   01C3 1C            [ 2]  482 	PUSH	
+   01C4 00 FF         [ 2]  483 	LDA	#0xff
+   01C6 1C            [ 2]  484 	PUSH	
+   01C7 00 06         [ 2]  485 	LDA	#0x06
+   01C9 1C            [ 2]  486 	PUSH	
+   01CA B0 00         [ 3]  487 	CALL	_api_rec_start_alc
+   01CC E5 D2         [ 2]  488 	JNZ	_00215_DS_
+                            489 ;	.line	206; "demo.c"	api_rec_stop_alc(0); // return 0 means stopped
+   01CE CE            [ 1]  490 	CLRA	
+   01CF 1C            [ 2]  491 	PUSH	
+                            492 ;	.line	207; "demo.c"	return;		
+   01D0 F0 00         [ 2]  493 	JMP	_api_rec_stop_alc
+   01D2                     494 _00215_DS_:
+                            495 ;	.line	209; "demo.c"	sys_state=SYS_REC;
+   01D2 00 02         [ 2]  496 	LDA	#0x02
+   01D4 13 01         [ 2]  497 	STA	_sys_state
+   01D6                     498 _00216_DS_:
+   01D6 C0            [ 1]  499 	RET	
+                            500 
+                            501 ;***
+                            502 ;  pBlock Stats: dbName = C
+                            503 ;***
+                            504 ;entry:  _callbackchk:	;Function start
+                            505 ; 2 exit points
+                            506 ;highest stack level is: 0
+                            507 ;has an exit
+                            508 ;functions called:
+                            509 ;   _api_enter_stdby_mode
+                            510 ;; Starting pCode block
+   01D7                     511 _callbackchk:	;Function start
+                            512 ; 2 exit points
+                            513 ;	.line	173; "demo.c"	api_enter_stdby_mode(0,0,1);
+   01D7 00 01         [ 2]  514 	LDA	#0x01
+   01D9 1C            [ 2]  515 	PUSH	
+   01DA CE            [ 1]  516 	CLRA	
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 13.
+
+
+
+   01DB 1C            [ 2]  517 	PUSH	
+   01DC 1C            [ 2]  518 	PUSH	
+   01DD B0 00         [ 3]  519 	CALL	_api_enter_stdby_mode
+                            520 ;	.line	174; "demo.c"	if(IO&IO_REC)
+   01DF 02 00         [ 2]  521 	LDA	_IO
+   01E1 92            [ 1]  522 	SHR	
+   01E2 E1 E7         [ 2]  523 	JNC	_00204_DS_
+                            524 ;	.line	175; "demo.c"	return 1;
+   01E4 00 01         [ 2]  525 	LDA	#0x01
+   01E6 C0            [ 1]  526 	RET	
+   01E7                     527 _00204_DS_:
+                            528 ;	.line	176; "demo.c"	return 0;
+   01E7 CE            [ 1]  529 	CLRA	
+   01E8 C0            [ 1]  530 	RET	
+                            531 
+                            532 ;***
+                            533 ;  pBlock Stats: dbName = C
+                            534 ;***
+                            535 ;entry:  _wait_beep:	;Function start
+                            536 ; 0 exit points
+                            537 ;highest stack level is: 3
+                            538 ;functions called:
+                            539 ;   _timer_routine
+                            540 ;   _api_enter_stdby_mode
+                            541 ;; Starting pCode block
+   01E9                     542 _wait_beep:	;Function start
+                            543 ; 0 exit points
+                            544 ;	.line	154; "demo.c"	void wait_beep(BYTE count)
+   01E9 02 00         [ 2]  545 	LDA	_RAMP1L
+   01EB 1C            [ 2]  546 	PUSH	
+   01EC C8            [ 1]  547 	P02P1	
+   01ED 01 FE         [ 2]  548 	LDA	@P1,-2
+   01EF 13 05         [ 2]  549 	STA	_beep_timer
+   01F1                     550 _00195_DS_:
+                            551 ;	.line	157; "demo.c"	while(beep_timer)
+   01F1 03 05         [ 2]  552 	LDA	_beep_timer
+   01F3 E6 0D         [ 2]  553 	JZ	_00198_DS_
+                            554 ;	.line	159; "demo.c"	timer_routine();
+   01F5 B2 B9         [ 3]  555 	CALL	_timer_routine
+                            556 ;	.line	160; "demo.c"	if(key_state)
+   01F7 03 00         [ 2]  557 	LDA	_key_state
+   01F9 E6 03         [ 2]  558 	JZ	_00193_DS_
+                            559 ;	.line	161; "demo.c"	api_enter_stdby_mode(0 ,0,0); // use tmr wk
+   01FB CE            [ 1]  560 	CLRA	
+   01FC 1C            [ 2]  561 	PUSH	
+   01FD 1C            [ 2]  562 	PUSH	
+   01FE 1C            [ 2]  563 	PUSH	
+   01FF B0 00         [ 3]  564 	CALL	_api_enter_stdby_mode
+   0201 F1 F1         [ 2]  565 	JMP	_00195_DS_
+   0203                     566 _00193_DS_:
+                            567 ;	.line	163; "demo.c"	api_enter_stdby_mode(IO_KEY_ALL,0,0); //use tmr+io wk
+   0203 CE            [ 1]  568 	CLRA	
+   0204 1C            [ 2]  569 	PUSH	
+   0205 1C            [ 2]  570 	PUSH	
+   0206 00 07         [ 2]  571 	LDA	#0x07
+   0208 1C            [ 2]  572 	PUSH	
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 14.
+
+
+
+   0209 B0 00         [ 3]  573 	CALL	_api_enter_stdby_mode
+   020B F1 F1         [ 2]  574 	JMP	_00195_DS_
+   020D                     575 _00198_DS_:
+   020D C4            [ 1]  576 	POP	
+   020E 12 00         [ 2]  577 	STA	_RAMP1L
+   0210 C4            [ 1]  578 	POP	
+   0211 C0            [ 1]  579 	RET	
+                            580 
+                            581 ;***
+                            582 ;  pBlock Stats: dbName = C
+                            583 ;***
+                            584 ;entry:  _enter_play_mode:	;Function start
+                            585 ; 2 exit points
+                            586 ;highest stack level is: 1
+                            587 ;has an exit
+                            588 ;functions called:
+                            589 ;   _api_set_vol
+                            590 ;   _api_play_start
+                            591 ;; Starting pCode block
+   0212                     592 _enter_play_mode:	;Function start
+                            593 ; 2 exit points
+                            594 ;	.line	131; "demo.c"	BYTE enter_play_mode(BYTE seg)
+   0212 02 00         [ 2]  595 	LDA	_RAMP1L
+   0214 1C            [ 2]  596 	PUSH	
+   0215 C8            [ 1]  597 	P02P1	
+   0216 1C            [ 2]  598 	PUSH	
+                            599 ;	.line	133; "demo.c"	BYTE try_play=0;
+   0217 CE            [ 1]  600 	CLRA	
+   0218 15            [ 2]  601 	STA	@_RAMP1
+                            602 ;	.line	134; "demo.c"	api_set_vol(API_PAGV_DEFAULT,0x78);
+   0219 00 78         [ 2]  603 	LDA	#0x78
+   021B 1C            [ 2]  604 	PUSH	
+   021C 00 3F         [ 2]  605 	LDA	#0x3f
+   021E 1C            [ 2]  606 	PUSH	
+   021F B0 00         [ 3]  607 	CALL	_api_set_vol
+                            608 ;	.line	135; "demo.c"	switch(seg)
+   0221 2F            [ 2]  609 	SETB	_C
+   0222 00 03         [ 2]  610 	LDA	#0x03
+   0224 49 FE         [ 2]  611 	SUBB	@P1,-2
+   0226 E2 A7         [ 2]  612 	JNC	_00175_DS_
+   0228 01 FE         [ 2]  613 	LDA	@P1,-2
+   022A B2 2C         [ 3]  614 	CALL	_00186_DS_
+   022C                     615 _00186_DS_:
+   022C 90            [ 1]  616 	SHL	
+   022D 50 37         [ 2]  617 	ADD	#_00187_DS_
+   022F 12 00         [ 2]  618 	STA	_STACKL
+   0231 CE            [ 1]  619 	CLRA	
+   0232 40 02         [ 2]  620 	ADDC	#>(_00187_DS_)
+   0234 12 00         [ 2]  621 	STA	_STACKH
+   0236 C0            [ 1]  622 	RET	
+   0237                     623 _00187_DS_:
+   0237 F2 3F         [ 2]  624 	JMP	_00171_DS_
+   0239 F2 59         [ 2]  625 	JMP	_00172_DS_
+   023B F2 74         [ 2]  626 	JMP	_00173_DS_
+   023D F2 90         [ 2]  627 	JMP	_00174_DS_
+   023F                     628 _00171_DS_:
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 15.
+
+
+
+                            629 ;	.line	138; "demo.c"	try_play=API_PSTARTH(P0);
+   023F 00 04         [ 2]  630 	LDA	#0x04
+   0241 1C            [ 2]  631 	PUSH	
+   0242 CE            [ 1]  632 	CLRA	
+   0243 1C            [ 2]  633 	PUSH	
+   0244 00 70         [ 2]  634 	LDA	#0x70
+   0246 1C            [ 2]  635 	PUSH	
+   0247 00 02         [ 2]  636 	LDA	#0x02
+   0249 1C            [ 2]  637 	PUSH	
+   024A 00 1D         [ 2]  638 	LDA	#0x1d
+   024C 1C            [ 2]  639 	PUSH	
+   024D CE            [ 1]  640 	CLRA	
+   024E 1C            [ 2]  641 	PUSH	
+   024F 00 10         [ 2]  642 	LDA	#0x10
+   0251 1C            [ 2]  643 	PUSH	
+   0252 CE            [ 1]  644 	CLRA	
+   0253 1C            [ 2]  645 	PUSH	
+   0254 B0 00         [ 3]  646 	CALL	_api_play_start
+   0256 15            [ 2]  647 	STA	@_RAMP1
+                            648 ;	.line	139; "demo.c"	break;
+   0257 F2 A7         [ 2]  649 	JMP	_00175_DS_
+   0259                     650 _00172_DS_:
+                            651 ;	.line	141; "demo.c"	try_play=API_PSTARTH(P1);
+   0259 00 04         [ 2]  652 	LDA	#0x04
+   025B 1C            [ 2]  653 	PUSH	
+   025C CE            [ 1]  654 	CLRA	
+   025D 1C            [ 2]  655 	PUSH	
+   025E 00 70         [ 2]  656 	LDA	#0x70
+   0260 1C            [ 2]  657 	PUSH	
+   0261 00 02         [ 2]  658 	LDA	#0x02
+   0263 1C            [ 2]  659 	PUSH	
+   0264 00 6C         [ 2]  660 	LDA	#0x6c
+   0266 1C            [ 2]  661 	PUSH	
+   0267 00 01         [ 2]  662 	LDA	#0x01
+   0269 1C            [ 2]  663 	PUSH	
+   026A 00 1D         [ 2]  664 	LDA	#0x1d
+   026C 1C            [ 2]  665 	PUSH	
+   026D CE            [ 1]  666 	CLRA	
+   026E 1C            [ 2]  667 	PUSH	
+   026F B0 00         [ 3]  668 	CALL	_api_play_start
+   0271 15            [ 2]  669 	STA	@_RAMP1
+                            670 ;	.line	142; "demo.c"	break;
+   0272 F2 A7         [ 2]  671 	JMP	_00175_DS_
+   0274                     672 _00173_DS_:
+                            673 ;	.line	144; "demo.c"	try_play= API_PSTARTH_NOSAT(R3);
+   0274 00 04         [ 2]  674 	LDA	#0x04
+   0276 1C            [ 2]  675 	PUSH	
+   0277 00 80         [ 2]  676 	LDA	#0x80
+   0279 1C            [ 2]  677 	PUSH	
+   027A 00 FF         [ 2]  678 	LDA	#0xff
+   027C 1C            [ 2]  679 	PUSH	
+   027D 00 01         [ 2]  680 	LDA	#0x01
+   027F 1C            [ 2]  681 	PUSH	
+   0280 CE            [ 1]  682 	CLRA	
+   0281 1C            [ 2]  683 	PUSH	
+   0282 00 08         [ 2]  684 	LDA	#0x08
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 16.
+
+
+
+   0284 1C            [ 2]  685 	PUSH	
+   0285 00 80         [ 2]  686 	LDA	#0x80
+   0287 1C            [ 2]  687 	PUSH	
+   0288 00 01         [ 2]  688 	LDA	#0x01
+   028A 1C            [ 2]  689 	PUSH	
+   028B B0 00         [ 3]  690 	CALL	_api_play_start
+   028D 15            [ 2]  691 	STA	@_RAMP1
+                            692 ;	.line	145; "demo.c"	break;
+   028E F2 A7         [ 2]  693 	JMP	_00175_DS_
+   0290                     694 _00174_DS_:
+                            695 ;	.line	147; "demo.c"	try_play= API_PSTARTL(R3);
+   0290 CE            [ 1]  696 	CLRA	
+   0291 1C            [ 2]  697 	PUSH	
+   0292 1C            [ 2]  698 	PUSH	
+   0293 00 FF         [ 2]  699 	LDA	#0xff
+   0295 1C            [ 2]  700 	PUSH	
+   0296 00 01         [ 2]  701 	LDA	#0x01
+   0298 1C            [ 2]  702 	PUSH	
+   0299 CE            [ 1]  703 	CLRA	
+   029A 1C            [ 2]  704 	PUSH	
+   029B 00 08         [ 2]  705 	LDA	#0x08
+   029D 1C            [ 2]  706 	PUSH	
+   029E 00 80         [ 2]  707 	LDA	#0x80
+   02A0 1C            [ 2]  708 	PUSH	
+   02A1 00 01         [ 2]  709 	LDA	#0x01
+   02A3 1C            [ 2]  710 	PUSH	
+   02A4 B0 00         [ 3]  711 	CALL	_api_play_start
+   02A6 15            [ 2]  712 	STA	@_RAMP1
+   02A7                     713 _00175_DS_:
+                            714 ;	.line	150; "demo.c"	if(try_play)
+   02A7 05            [ 2]  715 	LDA	@_RAMP1
+   02A8 E6 AE         [ 2]  716 	JZ	_00177_DS_
+                            717 ;	.line	151; "demo.c"	sys_state=SYS_PLAY;
+   02AA 00 01         [ 2]  718 	LDA	#0x01
+   02AC 13 01         [ 2]  719 	STA	_sys_state
+   02AE                     720 _00177_DS_:
+                            721 ;	.line	152; "demo.c"	return try_play; // return the result
+   02AE 05            [ 2]  722 	LDA	@_RAMP1
+   02AF 12 00         [ 2]  723 	STA	_PTRCL
+   02B1 C4            [ 1]  724 	POP	
+   02B2 C4            [ 1]  725 	POP	
+   02B3 12 00         [ 2]  726 	STA	_RAMP1L
+   02B5 C4            [ 1]  727 	POP	
+   02B6 02 00         [ 2]  728 	LDA	_PTRCL
+   02B8 C0            [ 1]  729 	RET	
+                            730 ;; end of function enter_play_mode
+                            731 ; exit point of _enter_play_mode
+                            732 
+                            733 ;***
+                            734 ;  pBlock Stats: dbName = C
+                            735 ;***
+                            736 ;entry:  _timer_routine:	;Function start
+                            737 ; 0 exit points
+                            738 ;highest stack level is: 4
+                            739 ;functions called:
+                            740 ;   _key_machine
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 17.
+
+
+
+                            741 ;; Starting pCode block
+   02B9                     742 _timer_routine:	;Function start
+                            743 ; 0 exit points
+                            744 ;	.line	119; "demo.c"	if(!TOV)
+   02B9 DC            [ 1]  745 	LDC	_TOV
+                            746 ;	.line	120; "demo.c"	return ;
+   02BA E2 CD         [ 2]  747 	JNC	_00166_DS_
+                            748 ;	.line	121; "demo.c"	TOV=0;
+   02BC 3C            [ 2]  749 	CLRB	_TOV
+                            750 ;	.line	122; "demo.c"	if(sleep_timer)
+   02BD 03 06         [ 2]  751 	LDA	_sleep_timer
+                            752 ;	.line	123; "demo.c"	sleep_timer--;
+   02BF E6 C4         [ 2]  753 	JZ	_00163_DS_
+   02C1 CD            [ 1]  754 	DECA	
+   02C2 13 06         [ 2]  755 	STA	_sleep_timer
+   02C4                     756 _00163_DS_:
+                            757 ;	.line	124; "demo.c"	if(beep_timer)
+   02C4 03 05         [ 2]  758 	LDA	_beep_timer
+                            759 ;	.line	125; "demo.c"	beep_timer--;
+   02C6 E6 CB         [ 2]  760 	JZ	_00165_DS_
+   02C8 CD            [ 1]  761 	DECA	
+   02C9 13 05         [ 2]  762 	STA	_beep_timer
+   02CB                     763 _00165_DS_:
+                            764 ;	.line	127; "demo.c"	key_machine();
+   02CB B2 CE         [ 3]  765 	CALL	_key_machine
+   02CD                     766 _00166_DS_:
+   02CD C0            [ 1]  767 	RET	
+                            768 
+                            769 ;***
+                            770 ;  pBlock Stats: dbName = C
+                            771 ;***
+                            772 ;entry:  _key_machine:	;Function start
+                            773 ; 0 exit points
+                            774 ;highest stack level is: 5
+                            775 ;functions called:
+                            776 ;   _get_key
+                            777 ;; Starting pCode block
+   02CE                     778 _key_machine:	;Function start
+                            779 ; 0 exit points
+                            780 ;	.line	83; "demo.c"	void key_machine(void)
+   02CE 02 00         [ 2]  781 	LDA	_RAMP1L
+   02D0 1C            [ 2]  782 	PUSH	
+   02D1 C8            [ 1]  783 	P02P1	
+   02D2 1C            [ 2]  784 	PUSH	
+                            785 ;	.line	86; "demo.c"	k=get_key();
+   02D3 B3 47         [ 3]  786 	CALL	_get_key
+   02D5 15            [ 2]  787 	STA	@_RAMP1
+                            788 ;	.line	87; "demo.c"	switch(key_state)
+   02D6 2F            [ 2]  789 	SETB	_C
+   02D7 00 02         [ 2]  790 	LDA	#0x02
+   02D9 4B 00         [ 2]  791 	SUBB	_key_state
+   02DB E3 26         [ 2]  792 	JNC	_00133_DS_
+   02DD 03 00         [ 2]  793 	LDA	_key_state
+   02DF B2 E1         [ 3]  794 	CALL	_00153_DS_
+   02E1                     795 _00153_DS_:
+   02E1 90            [ 1]  796 	SHL	
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 18.
+
+
+
+   02E2 50 EC         [ 2]  797 	ADD	#_00154_DS_
+   02E4 12 00         [ 2]  798 	STA	_STACKL
+   02E6 CE            [ 1]  799 	CLRA	
+   02E7 40 02         [ 2]  800 	ADDC	#>(_00154_DS_)
+   02E9 12 00         [ 2]  801 	STA	_STACKH
+   02EB C0            [ 1]  802 	RET	
+   02EC                     803 _00154_DS_:
+   02EC F2 F2         [ 2]  804 	JMP	_00120_DS_
+   02EE F3 05         [ 2]  805 	JMP	_00124_DS_
+   02F0 F3 20         [ 2]  806 	JMP	_00129_DS_
+   02F2                     807 _00120_DS_:
+                            808 ;	.line	90; "demo.c"	if(!key_code && k)
+   02F2 03 03         [ 2]  809 	LDA	_key_code
+   02F4 E7 26         [ 2]  810 	JNZ	_00133_DS_
+                            811 ;	.line	92; "demo.c"	last_stroke=k;
+   02F6 05            [ 2]  812 	LDA	@_RAMP1
+   02F7 E7 26         [ 2]  813 	JZ	_00133_DS_
+   02F9 13 02         [ 2]  814 	STA	_last_stroke
+                            815 ;	.line	93; "demo.c"	key_state=KEYS_DEB;
+   02FB 00 01         [ 2]  816 	LDA	#0x01
+   02FD 13 00         [ 2]  817 	STA	_key_state
+                            818 ;	.line	94; "demo.c"	key_timer=KEY_WAIT;
+   02FF 00 05         [ 2]  819 	LDA	#0x05
+   0301 13 04         [ 2]  820 	STA	_key_timer
+                            821 ;	.line	96; "demo.c"	break;
+   0303 F3 26         [ 2]  822 	JMP	_00133_DS_
+   0305                     823 _00124_DS_:
+                            824 ;	.line	98; "demo.c"	if(k!=last_stroke)
+   0305 03 02         [ 2]  825 	LDA	_last_stroke
+   0307 85            [ 2]  826 	XOR	@_RAMP1
+                            827 ;	.line	100; "demo.c"	key_state=KEYS_NOKEY;
+   0308 E7 0F         [ 2]  828 	JZ	_00126_DS_
+   030A CE            [ 1]  829 	CLRA	
+   030B 13 00         [ 2]  830 	STA	_key_state
+                            831 ;	.line	101; "demo.c"	break;
+   030D F3 26         [ 2]  832 	JMP	_00133_DS_
+   030F                     833 _00126_DS_:
+                            834 ;	.line	103; "demo.c"	if(!--key_timer)
+   030F 03 04         [ 2]  835 	LDA	_key_timer
+   0311 CD            [ 1]  836 	DECA	
+   0312 13 04         [ 2]  837 	STA	_key_timer
+   0314 E7 26         [ 2]  838 	JNZ	_00133_DS_
+                            839 ;	.line	105; "demo.c"	key_code=last_stroke;
+   0316 03 02         [ 2]  840 	LDA	_last_stroke
+   0318 13 03         [ 2]  841 	STA	_key_code
+                            842 ;	.line	106; "demo.c"	key_state=KEYS_WAITRELEASE;
+   031A 00 02         [ 2]  843 	LDA	#0x02
+   031C 13 00         [ 2]  844 	STA	_key_state
+                            845 ;	.line	108; "demo.c"	break;
+   031E F3 26         [ 2]  846 	JMP	_00133_DS_
+   0320                     847 _00129_DS_:
+                            848 ;	.line	110; "demo.c"	if(!k)
+   0320 05            [ 2]  849 	LDA	@_RAMP1
+   0321 E7 26         [ 2]  850 	JNZ	_00133_DS_
+                            851 ;	.line	111; "demo.c"	key_state=KEYS_NOKEY;
+   0323 CE            [ 1]  852 	CLRA	
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 19.
+
+
+
+   0324 13 00         [ 2]  853 	STA	_key_state
+   0326                     854 _00133_DS_:
+                            855 ;	.line	114; "demo.c"	};
+   0326 C4            [ 1]  856 	POP	
+   0327 C4            [ 1]  857 	POP	
+   0328 12 00         [ 2]  858 	STA	_RAMP1L
+   032A C0            [ 1]  859 	RET	
+                            860 
+                            861 ;***
+                            862 ;  pBlock Stats: dbName = C
+                            863 ;***
+                            864 ;entry:  _init:	;Function start
+                            865 ; 0 exit points
+                            866 ;highest stack level is: 1
+                            867 ;functions called:
+                            868 ;   _api_timer_on
+                            869 ;; Starting pCode block
+   032B                     870 _init:	;Function start
+                            871 ; 0 exit points
+                            872 ;	.line	70; "demo.c"	IO=0xFF; // all high
+   032B 00 FF         [ 2]  873 	LDA	#0xff
+   032D 12 00         [ 2]  874 	STA	_IO
+                            875 ;	.line	71; "demo.c"	IODIR=0xc0;
+   032F 00 C0         [ 2]  876 	LDA	#0xc0
+   0331 12 00         [ 2]  877 	STA	_IODIR
+                            878 ;	.line	72; "demo.c"	IOWK=0; // deep sleep mode no use wk
+   0333 CE            [ 1]  879 	CLRA	
+   0334 12 00         [ 2]  880 	STA	_IOWK
+                            881 ;	.line	73; "demo.c"	sleep_timer=KEY_WAIT;
+   0336 00 05         [ 2]  882 	LDA	#0x05
+   0338 13 06         [ 2]  883 	STA	_sleep_timer
+                            884 ;	.line	74; "demo.c"	API_USE_ERC;
+   033A 00 98         [ 2]  885 	LDA	#0x98
+   033C 72 00         [ 2]  886 	AND	_RCCON
+   033E 60 03         [ 2]  887 	ORA	#0x03
+   0340 12 00         [ 2]  888 	STA	_RCCON
+                            889 ;	.line	80; "demo.c"	api_timer_on(TMR_RLD);
+   0342 00 E0         [ 2]  890 	LDA	#0xe0
+   0344 1C            [ 2]  891 	PUSH	
+   0345 F0 00         [ 2]  892 	JMP	_api_timer_on
+                            893 
+                            894 ;***
+                            895 ;  pBlock Stats: dbName = C
+                            896 ;***
+                            897 ;entry:  _get_key:	;Function start
+                            898 ; 2 exit points
+                            899 ;highest stack level is: 6
+                            900 ;has an exit
+                            901 ;; Starting pCode block
+   0347                     902 _get_key:	;Function start
+                            903 ; 2 exit points
+                            904 ;	.line	56; "demo.c"	if(!(IO&IO_PLAY))
+   0347 00 02         [ 2]  905 	LDA	#0x02
+   0349 72 00         [ 2]  906 	AND	_IO
+   034B E7 50         [ 2]  907 	JNZ	_00106_DS_
+                            908 ;	.line	57; "demo.c"	return KEY_CODE_PLAY;
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 20.
+
+
+
+   034D 00 01         [ 2]  909 	LDA	#0x01
+   034F C0            [ 1]  910 	RET	
+   0350                     911 _00106_DS_:
+                            912 ;	.line	58; "demo.c"	if(!(IO&IO_PLAYREC))
+   0350 00 04         [ 2]  913 	LDA	#0x04
+   0352 72 00         [ 2]  914 	AND	_IO
+   0354 E7 59         [ 2]  915 	JNZ	_00108_DS_
+                            916 ;	.line	59; "demo.c"	return KEY_CODE_PLAYREC;
+   0356 00 03         [ 2]  917 	LDA	#0x03
+   0358 C0            [ 1]  918 	RET	
+   0359                     919 _00108_DS_:
+                            920 ;	.line	60; "demo.c"	if(!(IO&IO_REC))
+   0359 02 00         [ 2]  921 	LDA	_IO
+   035B 92            [ 1]  922 	SHR	
+   035C E3 61         [ 2]  923 	JC	_00110_DS_
+                            924 ;	.line	61; "demo.c"	return KEY_CODE_REC;
+   035E 00 02         [ 2]  925 	LDA	#0x02
+   0360 C0            [ 1]  926 	RET	
+   0361                     927 _00110_DS_:
+                            928 ;	.line	64; "demo.c"	return 0;
+   0361 CE            [ 1]  929 	CLRA	
+   0362 C0            [ 1]  930 	RET	
+                            931 
+                            932 
+                            933 ;	code size estimation:
+                            934 ;	  532+  333 =   865 instructions (  865 byte)
+                            935 
+                            936 ;--------------------------------------------------------
+                            937 ; compiler-defined variables
+                            938 ;--------------------------------------------------------
+                            939 ;--------------------------------------------------------
+                            940 ; initialized data - shadow
+                            941 ;--------------------------------------------------------
+                            942 ;--------------------------------------------------------
+                            943 ; initialized data
+                            944 ;--------------------------------------------------------
+                            945 	.globl __PARA_STK
+                            946 	.area SSEG (DATA,OVR)
+   0000                     947 __PARA_STK:	.ds 1
+                            948 ;--------------------------------------------------------
+                            949 ; external declarations
+                            950 ;--------------------------------------------------------
+                            951 	.globl	_api_rec_prepare_alc
+                            952 	.globl	_api_rec_start_alc
+                            953 	.globl	_api_rec_stop_alc
+                            954 	.globl	_api_rec_job_alc
+                            955 	.globl	_api_set_vol
+                            956 	.globl	_api_play_start
+                            957 	.globl	_api_play_job
+                            958 	.globl	_api_play_stop
+                            959 	.globl	_api_beep_start
+                            960 	.globl	_api_beep_stop
+                            961 	.globl	_api_timer_on
+                            962 	.globl	_api_enter_stdby_mode
+                            963 	.globl	_api_normal_sleep
+                            964 	.globl	_IOR
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 21.
+
+
+
+                            965 	.globl	_IODIR
+                            966 	.globl	_IO
+                            967 	.globl	_IOWK
+                            968 	.globl	_IOWKDR
+                            969 	.globl	_TIMERC
+                            970 	.globl	_THRLD
+                            971 	.globl	_RAMP0L
+                            972 	.globl	_RAMP0H
+                            973 	.globl	_RAMP1L
+                            974 	.globl	_RAMP1H
+                            975 	.globl	_PTRCL
+                            976 	.globl	_PTRCH
+                            977 	.globl	_ROMPL
+                            978 	.globl	_ROMPH
+                            979 	.globl	_BEEPC
+                            980 	.globl	_FILTERG
+                            981 	.globl	_ULAWC
+                            982 	.globl	_STACKL
+                            983 	.globl	_STACKH
+                            984 	.globl	_ADCON
+                            985 	.globl	_DACON
+                            986 	.globl	_SYSC
+                            987 	.globl	_SPIM
+                            988 	.globl	_SPIH
+                            989 	.globl	_SPIOP
+                            990 	.globl	_SPI_BANK
+                            991 	.globl	_ADP_IND
+                            992 	.globl	_ADP_VPL
+                            993 	.globl	_ADP_VPH
+                            994 	.globl	_ADL
+                            995 	.globl	_ADH
+                            996 	.globl	_ZC
+                            997 	.globl	_ADCG
+                            998 	.globl	_DAC_PL
+                            999 	.globl	_DAC_PH
+                           1000 	.globl	_PAG
+                           1001 	.globl	_DMAL
+                           1002 	.globl	_DMAH
+                           1003 	.globl	_SPIL
+                           1004 	.globl	_IOMASK
+                           1005 	.globl	_IOCMP
+                           1006 	.globl	_IOCNT
+                           1007 	.globl	_LVDCON
+                           1008 	.globl	_LVRCON
+                           1009 	.globl	_OFFSETL
+                           1010 	.globl	_OFFSETH
+                           1011 	.globl	_RCCON
+                           1012 	.globl	_BGCON
+                           1013 	.globl	_PWRL
+                           1014 	.globl	_CRYPT
+                           1015 	.globl	_PWRH
+                           1016 	.globl	_PWRHL
+                           1017 	.globl	_IROMDL
+                           1018 	.globl	_IROMDH
+                           1019 	.globl	_IROMDLH
+                           1020 	.globl	_RECMUTE
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 22.
+
+
+
+                           1021 	.globl	_SPKC
+                           1022 	.globl	_DCLAMP
+                           1023 	.globl	_SSPIC
+                           1024 	.globl	_SSPIL
+                           1025 	.globl	_SSPIM
+                           1026 	.globl	_SSPIH
+                           1027 	.globl	_RAMP0
+                           1028 	.globl	_RAMP0LH
+                           1029 	.globl	_RAMP1LH
+                           1030 	.globl	_RAMP0INC
+                           1031 	.globl	_RAMP1
+                           1032 	.globl	_DMAHL
+                           1033 	.globl	_RAMP1INC
+                           1034 	.globl	_RAMP1INC2
+                           1035 	.globl	_ROMP
+                           1036 	.globl	_ROMPINC
+                           1037 	.globl	_ROMPLH
+                           1038 	.globl	_ROMPINC2
+                           1039 	.globl	_ACC
+                           1040 	.globl	_RAMP0UW
+                           1041 	.globl	_RAMP1UW
+                           1042 	.globl	_ROMPUW
+                           1043 	.globl	_SPIMH
+                           1044 	.globl	_OFFSETLH
+                           1045 	.globl	_ADP_VPLH
+                           1046 	.globl	_ICE0
+                           1047 	.globl	_ICE1
+                           1048 	.globl	_ICE2
+                           1049 	.globl	_ICE3
+                           1050 	.globl	_ICE4
+                           1051 	.globl	_TOV
+                           1052 	.globl	_init_io_state
+                           1053 ;--------------------------------------------------------
+                           1054 ; global -1 declarations
+                           1055 ;--------------------------------------------------------
+                           1056 	.globl	_get_key
+                           1057 	.globl	_init
+                           1058 	.globl	_key_machine
+                           1059 	.globl	_timer_routine
+                           1060 	.globl	_enter_play_mode
+                           1061 	.globl	_wait_beep
+                           1062 	.globl	_callbackchk
+                           1063 	.globl	_enter_rec_mode
+                           1064 	.globl	_enter_idle_mode
+                           1065 	.globl	_sys_play
+                           1066 	.globl	_sys_rec
+                           1067 	.globl	_main
+                           1068 	.globl	_key_state
+                           1069 	.globl	_sys_state
+                           1070 	.globl	_last_stroke
+                           1071 	.globl	_key_code
+                           1072 	.globl	_key_timer
+                           1073 	.globl	_beep_timer
+                           1074 	.globl	_sleep_timer
+                           1075 	.globl	_countled
+                           1076 	.globl	__sp_inc
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (MS311 Series), page 23.
+
+
+
+                           1077 	.globl	__sp_dec
+                           1078 
+                           1079 	.globl STK02
+                           1080 	.globl STK01
+                           1081 	.globl STK00
+                           1082 	.globl _init_io_state
+                           1083 	 .area sharebank (DATA,OVR)
+   0000                    1084 _init_io_state:	.ds 1
+   0001                    1085 STK02:	.ds 1
+   0002                    1086 STK01:	.ds 1
+   0003                    1087 STK00:	.ds 1
+                           1088 
+                           1089 ;--------------------------------------------------------
+                           1090 ; global -2 definitions
+                           1091 ;--------------------------------------------------------
+                           1092 	.area DSEG(data)
+   0000                    1093 _key_state:	.ds	1
+                           1094 
+                           1095 	.area DSEG(data)
+   0001                    1096 _sys_state:	.ds	1
+                           1097 
+                           1098 	.area DSEG(data)
+   0002                    1099 _last_stroke:	.ds	1
+                           1100 
+                           1101 	.area DSEG(data)
+   0003                    1102 _key_code:	.ds	1
+                           1103 
+                           1104 	.area DSEG(data)
+   0004                    1105 _key_timer:	.ds	1
+                           1106 
+                           1107 	.area DSEG(data)
+   0005                    1108 _beep_timer:	.ds	1
+                           1109 
+                           1110 	.area DSEG(data)
+   0006                    1111 _sleep_timer:	.ds	1
+                           1112 
+                           1113 	.area DSEG(data)
+   0007                    1114 _countled:	.ds	1
+                           1115 
+                           1116 ;--------------------------------------------------------
+                           1117 ; absolute symbol definitions
+                           1118 ;--------------------------------------------------------
+                           1119 	;end
